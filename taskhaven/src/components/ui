@@ -1,0 +1,232 @@
+'use client';
+
+import React, { forwardRef } from 'react';
+import { Spinner } from './Spinner';
+import { IconType } from 'react-icons';
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'danger' | 'success';
+  isLoading?: boolean;
+  loadingText?: string;
+  leftIcon?: React.ReactElement<IconType>;
+  rightIcon?: React.ReactElement<IconType>;
+}
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      children,
+      className = '',
+      disabled: buttonDisabled = false,
+      isLoading = false,
+      loadingText = 'Loading...',
+      variant = 'primary',
+      leftIcon = null,
+      rightIcon = null,
+      ...rest
+    },
+    ref
+  ) => {
+    const disabled = isLoading || buttonDisabled;
+    return (
+      <button
+        ref={ref}
+        disabled={disabled}
+        className={`inline-flex items-center justify-center rounded-md px-4 py-2 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 
+          ${
+            variant === 'primary'
+              ? 'bg-blue-600 text-white hover:bg-blue-500 focus:ring-blue-500'
+              : variant === 'secondary'
+              ? 'bg-gray-600 text-white hover:bg-gray-500 focus:ring-gray-500'
+              : variant === 'danger'
+              ? 'bg-red-600 text-white hover:bg-red-500 focus:ring-red-500'
+              : variant === 'success'
+              ? 'bg-green-600 text-white hover:bg-green-500 focus:ring-green-500'
+              : ''
+          }
+          ${disabled && 'cursor-not-allowed bg-opacity-50'}
+          ${className}
+        `}
+        {...rest}
+      >
+        {isLoading && <Spinner className="mr-2 h-5 w-5 animate-spin" />}
+        {leftIcon && !isLoading && React.cloneElement(leftIcon, { className: 'mr-2 h-5 w-5' })}
+        {isLoading ? loadingText : children}
+        {rightIcon && !isLoading && React.cloneElement(rightIcon, { className: 'ml-2 h-5 w-5' })}
+      </button>
+    );
+  }
+);
+
+Button.displayName = 'Button';
+
+export default Button;
+
+'use client';
+
+import React, { forwardRef } from 'react';
+import { IconType } from 'react-icons';
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  icon?: React.ReactElement<IconType>;
+}
+
+const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, icon, className = '', ...rest }, ref) => {
+    return (
+      <div className="mb-4">
+        {label && (
+          <label htmlFor={rest.id} className="mb-2 block font-semibold">
+            {label}
+          </label>
+        )}
+        <div className="relative">
+          <input
+            ref={ref}
+            className={`w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+              error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+            } ${className}`}
+            {...rest}
+          />
+          {icon && (
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">
+              {React.cloneElement(icon, { className: 'h-5 w-5' })}
+            </div>
+          )}
+        </div>
+        {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+      </div>
+    );
+  }
+);
+
+Input.displayName = 'Input';
+
+export default Input;
+
+'use client';
+
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { FaTimes } from 'react-icons/fa';
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  title?: string;
+}
+
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
+  const [mounted, setMounted] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+
+    window.addEventListener('click', handleClickOutside);
+
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+    };
+  }, [onClose]);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden outline-none focus:outline-none">
+          <div className="relative mx-auto my-6 w-auto max-w-3xl">
+            <div
+              ref={modalRef}
+              className="relative flex w-full flex-col rounded-lg bg-white shadow-lg outline-none focus:outline-none"
+            >
+              <div className="flex items-start justify-between rounded-t border-b border-solid border-slate-200 p-5">
+                <h3 className="text-xl font-semibold">{title}</h3>
+                <button
+                  className="ml-auto inline-flex items-center rounded-lg bg-transparent p-1.5 text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900"
+                  onClick={onClose}
+                >
+                  <FaTimes className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="relative flex-auto p-6">{children}</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>,
+    document.body
+  );
+};
+
+export default Modal;
+
+import React from 'react';
+
+interface SpinnerProps {
+  className?: string;
+}
+
+export const Spinner: React.FC<SpinnerProps> = ({ className = '' }) => (
+  <div
+    className={`animate-spin rounded-full border-4 border-blue-600 border-t-transparent ${className}`}
+    style={{ borderTopColor: 'transparent' }}
+  />
+);
+
+'use client';
+
+import React, { useState } from 'react';
+
+interface TooltipProps {
+  content: React.ReactNode;
+  children: React.ReactNode;
+}
+
+const Tooltip: React.FC<TooltipProps> = ({ content, children }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  const handleMouseEnter = () => setIsVisible(true);
+  const handleMouseLeave = () => setIsVisible(false);
+
+  return (
+    <div
+      className="relative inline-block"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {children}
+      {isVisible && (
+        <div className="absolute left-1/2 z-10 mt-2 -translate-x-1/2 rounded bg-gray-800 py-1 px-3 text-sm text-white">
+          {content}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Tooltip;
