@@ -1,0 +1,26 @@
+import React from 'react';
+import {
+  FaCheck,
+  FaEdit,
+  FaTrash,
+  FaPlus,
+  FaMoon,
+  FaSun,
+  FaSignOutAlt,
+  FaSignInAlt,
+  FaUserPlus,
+  FaUserCircle,
+} from 'react-icons/fa';
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+
+export const CheckIcon = ({ ...props }) => <FaCheck {...props} />;
+export const EditIcon = ({ ...props }) => <FaEdit {...props} />;
+export const DeleteIcon = ({ ...props }) => <FaTrash {...props} />;
+export const AddIcon = ({ ...props }) => <FaPlus {...props} />;
+export const MoonIcon = ({ ...props }) => <FaMoon {...props} />;
+export const SunIcon = ({ ...props }) => <FaSun {...props} />;
+export const LogoutIcon = ({ ...props }) => <FaSignOutAlt {...props} />;
+export const LoginIcon = ({ ...props }) => <FaSignInAlt {...props} />;
+export const RegisterIcon = ({ ...props }) => <FaUserPlus {...props} />;
+export const UserIcon = ({ ...props }) => <FaUserCircle {...props} />;
+export const LoadingIcon = ({ ...props }) => <AiOutlineLoading3Quarters {...props} />;
