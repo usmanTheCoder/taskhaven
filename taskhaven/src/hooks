@@ -1,0 +1,198 @@
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../redux/store';
+import { setLoading, setError } from '../redux/slices/uiSlice';
+import { trpc } from '../utils/trpc';
+
+export const useAuth = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const { isLoading, error } = useSelector((state: RootState) => state.ui);
+  const dispatch = useDispatch<AppDispatch>();
+  const { mutate: login, isLoading: loginLoading } = trpc.useMutation(['auth.login'], {
+    onSuccess: (data) => {
+      setUser(data.user);
+      dispatch(setLoading(false));
+    },
+    onError: (err) => {
+      dispatch(setError(err.message));
+      dispatch(setLoading(false));
+    },
+  });
+
+  const { mutate: register, isLoading: registerLoading } = trpc.useMutation(['auth.register'], {
+    onSuccess: (data) => {
+      setUser(data.user);
+      dispatch(setLoading(false));
+    },
+    onError: (err) => {
+      dispatch(setError(err.message));
+      dispatch(setLoading(false));
+    },
+  });
+
+  const logout = () => {
+    setUser(null);
+  };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      dispatch(setLoading(true));
+      try {
+        const user = await trpc.query('auth.getCurrentUser');
+        setUser(user);
+      } catch (err) {
+        dispatch(setError(err.message));
+      } finally {
+        dispatch(setLoading(false));
+      }
+    };
+
+    fetchUser();
+  }, [dispatch]);
+
+  return { user, login, register, logout, isLoading, loginLoading, registerLoading, error };
+};
+
+export const useToggle = (initialValue: boolean = false): [boolean, () => void] => {
+  const [value, setValue] = useState(initialValue);
+
+  const toggle = () => {
+    setValue((prev) => !prev);
+  };
+
+  return [value, toggle];
+};
+
+export const useLocalStorage = <T>(key: string, initialValue: T) => {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.error(error);
+      return initialValue;
+    }
+  });
+
+  const setValue = (value: T) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return [storedValue, setValue];
+};
+
+export const useClickOutside = <T extends HTMLElement>(handler: () => void) => {
+  useEffect(() => {
+    const listener = (event: MouseEvent) => {
+      const el = event.target as Node;
+      if (!el || !el.closest) return;
+
+      const target = el.closest('T') as T | null;
+      if (!target) {
+        handler();
+      }
+    };
+
+    document.addEventListener('mousedown', listener);
+    return () => {
+      document.removeEventListener('mousedown', listener);
+    };
+  }, [handler]);
+};
+
+export const useDebounce = <T>(value: T, delay: number): T => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+export const useThrottle = <T>(value: T, limit: number): T => {
+  const [throttledValue, setThrottledValue] = useState<T>(value);
+  const lastRan = useRef<number>(Date.now());
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (Date.now() - lastRan.current >= limit) {
+        setThrottledValue(value);
+        lastRan.current = Date.now();
+      }
+    }, limit - (Date.now() - lastRan.current));
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, limit]);
+
+  return throttledValue;
+};
+
+export const useOnScreen = (ref: RefObject<HTMLElement>, rootMargin = '0px') => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (!ref.current) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      {
+        rootMargin,
+      }
+    );
+
+    observer.observe(ref.current);
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, [ref, rootMargin]);
+
+  return isVisible;
+};
+
+export const useEventListener = <T extends HTMLElement>(
+  eventName: string,
+  handler: (event: Event) => void,
+  element?: RefObject<T>
+) => {
+  const savedHandler = useRef<(event: Event) => void>();
+
+  useEffect(() => {
+    const targetElement = element?.current || window;
+    if (!targetElement) return;
+
+    if (savedHandler.current) targetElement.removeEventListener(eventName, savedHandler.current);
+
+    const handleEvent = (event: Event) => {
+      handler(event);
+    };
+
+    targetElement.addEventListener(eventName, handleEvent);
+    savedHandler.current = handleEvent;
+
+    return () => {
+      if (savedHandler.current) targetElement.removeEventListener(eventName, savedHandler.current);
+    };
+  }, [eventName, handler, element]);
+};
