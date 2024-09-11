@@ -1,0 +1,189 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { RootState } from '../store';
+
+interface TodoState {
+  todos: Todo[];
+  loading: boolean;
+  error: string | null;
+}
+
+interface Todo {
+  id: string;
+  title: string;
+  description: string;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const initialState: TodoState = {
+  todos: [],
+  loading: false,
+  error: null,
+};
+
+const todoSlice = createSlice({
+  name: 'todos',
+  initialState,
+  reducers: {
+    getTodosStart(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    getTodosSuccess(state, action: PayloadAction<Todo[]>) {
+      state.todos = action.payload;
+      state.loading = false;
+    },
+    getTodosFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    createTodoStart(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    createTodoSuccess(state, action: PayloadAction<Todo>) {
+      state.todos.push(action.payload);
+      state.loading = false;
+    },
+    createTodoFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    updateTodoStart(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    updateTodoSuccess(state, action: PayloadAction<Todo>) {
+      const updatedTodo = action.payload;
+      const index = state.todos.findIndex((todo) => todo.id === updatedTodo.id);
+      if (index !== -1) {
+        state.todos[index] = updatedTodo;
+      }
+      state.loading = false;
+    },
+    updateTodoFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    deleteTodoStart(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    deleteTodoSuccess(state, action: PayloadAction<string>) {
+      state.todos = state.todos.filter((todo) => todo.id !== action.payload);
+      state.loading = false;
+    },
+    deleteTodoFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+  },
+});
+
+export const {
+  getTodosStart,
+  getTodosSuccess,
+  getTodosFailure,
+  createTodoStart,
+  createTodoSuccess,
+  createTodoFailure,
+  updateTodoStart,
+  updateTodoSuccess,
+  updateTodoFailure,
+  deleteTodoStart,
+  deleteTodoSuccess,
+  deleteTodoFailure,
+} = todoSlice.actions;
+
+export const selectTodos = (state: RootState) => state.todos.todos;
+export const selectLoading = (state: RootState) => state.todos.loading;
+export const selectError = (state: RootState) => state.todos.error;
+
+export default todoSlice.reducer;
+```
+
+```typescript
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { RootState } from '../store';
+
+interface AuthState {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+}
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const initialState: AuthState = {
+  user: null,
+  loading: false,
+  error: null,
+};
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState,
+  reducers: {
+    signUpStart(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    signUpSuccess(state, action: PayloadAction<User>) {
+      state.user = action.payload;
+      state.loading = false;
+    },
+    signUpFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    signInStart(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    signInSuccess(state, action: PayloadAction<User>) {
+      state.user = action.payload;
+      state.loading = false;
+    },
+    signInFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    signOutStart(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    signOutSuccess(state) {
+      state.user = null;
+      state.loading = false;
+    },
+    signOutFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+  },
+});
+
+export const {
+  signUpStart,
+  signUpSuccess,
+  signUpFailure,
+  signInStart,
+  signInSuccess,
+  signInFailure,
+  signOutStart,
+  signOutSuccess,
+  signOutFailure,
+} = authSlice.actions;
+
+export const selectUser = (state: RootState) => state.auth.user;
+export const selectLoading = (state: RootState) => state.auth.loading;
+export const selectError = (state: RootState) => state.auth.error;
+
+export default authSlice.reducer;
